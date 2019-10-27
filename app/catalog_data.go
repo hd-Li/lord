@@ -1,6 +1,7 @@
 package app
 
 import (
+        "os"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,10 +23,18 @@ func addCatalogs(management *config.ManagementContext) error {
 	return utilerrors.AggregateGoroutines(
 		// add charts
 		func() error {
+                        lburl := os.Getenv("LIBRARY")
+			if lburl != ""{
+				return doAddCatalogs(management, libraryName, lburl, libraryBranch)
+			}
 			return doAddCatalogs(management, libraryName, libraryURL, libraryBranch)
 		},
 		// add rancher-charts
 		func() error {
+                        slburl := os.Getenv("SYSTEM_LIBRARY")
+			if slburl != ""{
+				return doAddCatalogs(management, systemLibraryName, slburl, systemLibraryBranch)
+			}
 			return doAddCatalogs(management, systemLibraryName, systemLibraryURL, systemLibraryBranch)
 		},
 	)
