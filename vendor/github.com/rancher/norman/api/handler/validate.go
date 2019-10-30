@@ -4,10 +4,13 @@ import (
 	"github.com/rancher/norman/parse"
 	"github.com/rancher/norman/parse/builder"
 	"github.com/rancher/norman/types"
+        "fmt"
 )
 
 func ParseAndValidateBody(apiContext *types.APIContext, create bool) (map[string]interface{}, error) {
 	data, err := parse.Body(apiContext.Request)
+        fmt.Println("...............................")
+        fmt.Println(data)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +40,8 @@ func ParseAndValidateBody(apiContext *types.APIContext, create bool) (map[string
 	if err != nil {
 		return nil, err
 	}
-
+        fmt.Println(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,")
+        fmt.Println(data)
 	return data, nil
 }
 

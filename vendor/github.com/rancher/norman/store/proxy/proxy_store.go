@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+        "fmt"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/objectclient/dynamic"
@@ -330,7 +331,8 @@ func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data 
 	if err := s.toInternal(schema.Mapper, data); err != nil {
 		return nil, err
 	}
-
+        fmt.Println(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+        fmt.Println(data)
 	namespace, _ := values.GetValueN(data, "metadata", "namespace").(string)
 
 	values.PutValue(data, s.getUser(apiContext), "metadata", "annotations", "field.cattle.io/creatorId")
