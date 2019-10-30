@@ -14,6 +14,7 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	//chbv1 "github.com/chb/api/v1beta1"
 )
 
 var (
@@ -1020,3 +1021,8 @@ func monitoringTypes(schemas *types.Schemas) *types.Schemas {
 		).
 		MustImport(&Version, monitoringv1.Alertmanager{}, projectOverride{})
 }
+/*
+func zkTypes(schemas *types.Schemas) *types.Schemas {
+	return schemas.MustImport(version, obj, externalOverrides)
+}
+*/

@@ -23,7 +23,8 @@ func ParseAndValidateBody(apiContext *types.APIContext, create bool) (map[string
 			data[key] = value
 		}
 	}
-
+	fmt.Println("''''''''''''''''''''''''''''''''''''''''")
+    fmt.Println(data)
 	b := builder.NewBuilder(apiContext)
 
 	op := builder.Create
@@ -36,6 +37,8 @@ func ParseAndValidateBody(apiContext *types.APIContext, create bool) (map[string
 			return nil, err
 		}
 	}
+	fmt.Println("`````````````````````````````````````````````")
+    fmt.Println(data)
 	data, err = b.Construct(apiContext.Schema, data, op)
 	if err != nil {
 		return nil, err
