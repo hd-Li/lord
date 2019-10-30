@@ -10,6 +10,7 @@ import (
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/definition"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"fmt"
 )
 
 var (
@@ -51,6 +52,8 @@ func NewBuilder(apiRequest *types.APIContext) *Builder {
 
 func (b *Builder) Construct(schema *types.Schema, input map[string]interface{}, op Operation) (map[string]interface{}, error) {
 	result, err := b.copyFields(schema, input, op)
+	fmt.Println("*****************************************************")
+	fmt.Println(result)
 	if err != nil {
 		return nil, err
 	}
