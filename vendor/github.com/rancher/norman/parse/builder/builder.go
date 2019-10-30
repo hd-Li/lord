@@ -10,7 +10,6 @@ import (
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/definition"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"fmt"
 )
 
 var (
