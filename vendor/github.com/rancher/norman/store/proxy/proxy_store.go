@@ -354,7 +354,7 @@ func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data 
     fmt.Println(data)
     apiversion := values.GetValueN(data, "apiVersion").(string)
     if apiversion == "networking.istio.io/v1alpha3" {
-    	values.RemoveValue(data, "metadata", "projectId") 
+    	values.RemoveValue(data, "projectId") 
     }
 	req := s.common(namespace, k8sClient.Post()).
 		Body(&unstructured.Unstructured{
