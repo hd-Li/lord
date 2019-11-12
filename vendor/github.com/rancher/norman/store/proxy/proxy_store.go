@@ -350,7 +350,8 @@ func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data 
 	if err != nil {
 		return nil, err
 	}
-
+    fmt.Println(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+    fmt.Println(data)
 	req := s.common(namespace, k8sClient.Post()).
 		Body(&unstructured.Unstructured{
 			Object: data,
