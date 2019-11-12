@@ -9,6 +9,7 @@ import (
 	namespacecustom "github.com/rancher/rancher/pkg/api/customization/namespace"
 	"github.com/rancher/rancher/pkg/api/customization/yaml"
 	"github.com/rancher/rancher/pkg/api/store/cert"
+	"github.com/rancher/rancher/pkg/api/store/crd"
 	"github.com/rancher/rancher/pkg/api/store/ingress"
 	"github.com/rancher/rancher/pkg/api/store/namespace"
 	"github.com/rancher/rancher/pkg/api/store/pod"
@@ -58,6 +59,7 @@ func Setup(ctx context.Context, mgmt *config.ScaledContext, clusterManager *clus
 	Service(ctx, schemas, mgmt)
 	Workload(schemas, clusterManager)
 	Namespace(schemas, clusterManager)
+	Istio(schemas)
 
 	SetProjectID(schemas, clusterManager, k8sProxy)
 
@@ -123,4 +125,16 @@ func Secret(ctx context.Context, management *config.ScaledContext, schemas *type
 
 	schema = schemas.Schema(&schema.Version, "namespacedCertificate")
 	schema.Store = cert.Wrap(schema.Store)
+}
+
+func Istio(schemas *types.Schemas) {
+	istioTypes := []string{client.VirtualServiceType, client.DestinationRuleType, client.GatewayType}
+	for _, t := range istioTypes {
+		schema := schemas.Schema(&schema.Version, t)
+		store := &crd.ForgetCRDNotFoundStore{
+			Store: schema.Store,
+		}
+		schema.Store = store
+	}
+
 }
