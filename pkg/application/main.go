@@ -10,14 +10,14 @@ import (
 	typesconfig "github.com/rancher/types/config"
 	"github.com/rancher/norman/store/proxy"
 	"github.com/rancher/norman/store/crd"
-	"github.com/rancher/norman/types"
+	//"github.com/rancher/norman/types"
 	projectschema "github.com/rancher/types/apis/project.cattle.io/v3/schema"
 	projectclient "github.com/rancher/types/client/project/v3"
 	"github.com/rancher/rancher/pkg/application/controller"
 )
 
 var (
-	kubeconfig string = "/root/.kube/config" 
+	kubeConfig string = "/root/.kube/config" 
 )
 
 func main() {
@@ -42,19 +42,17 @@ func main() {
 	}
 	
 	controller.Register(ctx, userContext)
-	err = userContext.Start(ctx) {
-		if err != nil {
-			panic(err)
-		}
+	err = userContext.Start(ctx) 
+	if err != nil {
+		panic(err)
 	}
-	
 }
 
-func SetupApplicationCRD(ctx context.Context, apiContext *config.UserOnlyContext, config rest.Config) error {
-	schemas := types.Schemas{}
+func SetupApplicationCRD(ctx context.Context, apiContext *typesconfig.UserOnlyContext, config rest.Config) error {
+	//schemas := types.Schemas{}
 	
 	applicationschema := apiContext.Schemas.Schema(&projectschema.Version, projectclient.ApplicationType)
-	schemas.AddSchema(applicationschema)
+	//schemas.AddSchema(applicationschema)
 	
 	clientGetter, err := proxy.NewClientGetterFromConfig(config)
 	if err != nil {
@@ -63,11 +61,7 @@ func SetupApplicationCRD(ctx context.Context, apiContext *config.UserOnlyContext
 	}
 	
 	factory := &crd.Factory{ClientGetter: clientGetter}
-	_, err := factory.CreateCRDs(ctx, typesconfig.UserStorageContext, schemas)
+	_, err = factory.CreateCRDs(ctx, typesconfig.UserStorageContext, applicationschema)
 	
 	return err
-}
-
-func registerApplictionController() error {
-	
 }
