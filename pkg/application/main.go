@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"context"
+	"signal"
 	
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -27,7 +28,8 @@ func main() {
 		log.Fatalf("Get restconfig failed: %s", err.Error())
 		os.Exit(1)
 	}
-	ctx, _ := context.WithCancel(context.Background())
+	
+	ctx := SigTermCancelContext(context.Background())
 	
 	userContext, err := typesconfig.NewUserOnlyContext(*restConfig)
 	if err != nil {
@@ -46,6 +48,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	<-ctx.Done()
 }
 
 func SetupApplicationCRD(ctx context.Context, apiContext *typesconfig.UserOnlyContext, config rest.Config) error {
@@ -64,4 +67,22 @@ func SetupApplicationCRD(ctx context.Context, apiContext *typesconfig.UserOnlyCo
 	_, err = factory.CreateCRDs(ctx, typesconfig.UserStorageContext, applicationschema)
 	
 	return err
+}
+
+func SigTermCancelContext(ctx context.Context) context.Context {
+	term := make(chan os.Signal)
+	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		select {
+		case <-term:
+			logrus.Infof("Received SIGTERM, cancelling")
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
+	return ctx
 }
