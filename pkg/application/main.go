@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"context"
-	"signal"
+	"os/signal"
 	
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
