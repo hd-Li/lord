@@ -3,15 +3,17 @@ package main
 import (
 	"log"
 	"os"
+	"context"
 	
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"github.com/rancher/types/config"
+	typesconfig "github.com/rancher/types/config"
 	"github.com/rancher/norman/store/proxy"
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/types"
 	projectschema "github.com/rancher/types/apis/project.cattle.io/v3/schema"
 	projectclient "github.com/rancher/types/client/project/v3"
+	"github.com/rancher/rancher/pkg/application/controller"
 )
 
 var (
@@ -25,18 +27,47 @@ func main() {
 		log.Fatalf("Get restconfig failed: %s", err.Error())
 		os.Exit(1)
 	}
+	ctx, _ := context.WithCancel(context.Background())
 	
-	userContext, err := config.NewUserOnlyContext(*restConfig)
+	userContext, err := typesconfig.NewUserOnlyContext(*restConfig)
+	if err != nil {
+		log.Fatalf("create userContext failed, err: %s", err.Error())
+		os.Exit(1)
+	}
+	
+	err = SetupApplicationCRD(ctx, userContext, *restConfig)
+	if err != nil {
+		log.Fatalf("ceate application crd failed, err: %s ", err.Error())
+		os.Exit(1)
+	}
+	
+	controller.Register(ctx, userContext)
+	err = userContext.Start(ctx) {
+		if err != nil {
+			panic(err)
+		}
+	}
+	
 }
 
-func SetupApplicationCRD(apiContext *config.UserOnlyContext, config rest.Config) error {
+func SetupApplicationCRD(ctx context.Context, apiContext *config.UserOnlyContext, config rest.Config) error {
 	schemas := types.Schemas{}
-	appclicationschema := apiContext.Schemas.Schema(&projectschema.Version, projectclient.)
+	
+	applicationschema := apiContext.Schemas.Schema(&projectschema.Version, projectclient.ApplicationType)
+	schemas.AddSchema(applicationschema)
+	
 	clientGetter, err := proxy.NewClientGetterFromConfig(config)
 	if err != nil {
-		log.Fatalln("create clientGetter error: %s", err.Error())
+		log.Fatalf("create clientGetter error: %s", err.Error())
 		return err
 	}
 	
-	factory := &crd..Factory{ClientGetter: clientGetter}
+	factory := &crd.Factory{ClientGetter: clientGetter}
+	_, err := factory.CreateCRDs(ctx, typesconfig.UserStorageContext, schemas)
+	
+	return err
+}
+
+func registerApplictionController() error {
+	
 }

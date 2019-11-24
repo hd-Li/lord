@@ -54,6 +54,7 @@ func Setup(ctx context.Context, mgmt *config.ScaledContext, clusterManager *clus
     addProxyStore(ctx, schemas, mgmt, client.VirtualServiceType, "networking.istio.io/v1alpha3", nil)
 	addProxyStore(ctx, schemas, mgmt, client.DestinationRuleType, "networking.istio.io/v1alpha3", nil)
 	addProxyStore(ctx, schemas, mgmt, client.GatewayType, "networking.istio.io/v1alpha3", nil)
+	addProxyStore(ctx, schemas, mgmt, client.ApplicationType, "project.cattle.io/v3", nil)
 	
 	Secret(ctx, mgmt, schemas)
 	Service(ctx, schemas, mgmt)
