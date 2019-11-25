@@ -7,4 +7,4 @@ cd $(dirname $0)/..
 
 mkdir -p bin
 [ "$(uname)" != "Darwin" ] && LINKFLAGS="-extldflags -static -s"
-CGO_ENABLED=0 go build -i  -ldflags "-X  $LINKFLAGS" -o bin/application ./pkg/application
+CGO_ENABLED=0 go build  -o bin/application ./pkg/application

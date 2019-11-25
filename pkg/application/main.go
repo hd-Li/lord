@@ -5,6 +5,7 @@ import (
 	"os"
 	"context"
 	"os/signal"
+	"syscall"
 	
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -78,7 +79,6 @@ func SigTermCancelContext(ctx context.Context) context.Context {
 	go func() {
 		select {
 		case <-term:
-			logrus.Infof("Received SIGTERM, cancelling")
 			cancel()
 		case <-ctx.Done():
 		}
