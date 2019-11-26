@@ -353,7 +353,8 @@ func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data 
     fmt.Println(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
     fmt.Println(data)
     apiversion := values.GetValueN(data, "apiVersion").(string)
-    if apiversion == "networking.istio.io/v1alpha3" {
+    kind := values.GetValueN(data, "kind").(string)
+    if apiversion == "networking.istio.io/v1alpha3" || kind == "Application"{
     	values.RemoveValue(data, "projectId") 
     }
 	req := s.common(namespace, k8sClient.Post()).
