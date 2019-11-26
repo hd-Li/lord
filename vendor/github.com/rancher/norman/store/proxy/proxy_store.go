@@ -360,7 +360,7 @@ func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data 
 		Body(&unstructured.Unstructured{
 			Object: data,
 		})
-
+    
 	_, result, err := s.singleResult(apiContext, schema, req)
 	return result, err
 }
