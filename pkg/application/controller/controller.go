@@ -15,6 +15,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+var (
+	LastAppliedConfigAnnotation string = "application/last-applied-configuration"
+)
+
 type controller struct {
 	applicationClient     v3.ApplicationInterface
 	applicationLister     v3.ApplicationLister
@@ -39,7 +43,7 @@ func (c *controller)sync(key string, app *v3.Application) (runtime.Object, error
 	if app == nil {
 		return nil, nil
 	}
-	
+	NamespaceCommonCheck(key)
 	splitted := strings.Split(key, "/")
 	namespace := splitted[0]
 	name := splitted[1]
@@ -89,4 +93,9 @@ func (c *controller)sync(key string, app *v3.Application) (runtime.Object, error
 		fmt.Printf("create deploy error: %s", err.Error())
 	}
 	return nil, nil
+}
+
+func (c *controller)syncWorkload (app *v3.Application) error {
+	resourceType := "deployment"
+	config := getWorkloadConfig(app *v3.Application)
 }
