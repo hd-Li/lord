@@ -15,7 +15,7 @@ var (
 func main() {
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 	
-	istiorbac := istiorabcv1alpha1.NewForConfig(*restConfig)
+	istiorbac, err := istiorabcv1alpha1.NewForConfig(*restConfig)
 	
 	rbacConfig := &v1alpha1.ClusterRbacConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -33,7 +33,7 @@ func main() {
 		},
 	}
 	
-	_ , err := istiorbac.ClusterRbacConfigs("").Create(rbac)
+	_ , err = istiorbac.ClusterRbacConfigs("").Create(rbacConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
