@@ -4,8 +4,10 @@ import (
 	"fmt"
 	
 	istiorabcv1alpha1 "github.com/rancher/types/apis/rbac.istio.io/v1alpha1"
+	istioauthnalpha1 "github.com/rancher/types/apis/authentication.istio.io/v1alpha1"
 	"k8s.io/client-go/tools/clientcmd"
 	"github.com/lord/types/pkg/istio/apis/rbac/v1alpha1"
+	authnv1alpha1 "github.com/lord/types/pkg/istio/apis/authentication/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,7 +17,14 @@ var (
 func main() {
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 	
-	istiorbac, err := istiorabcv1alpha1.NewForConfig(*restConfig)
+	err = policyTest(*restConfig)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+func rbacConfigTest(config rest.Config) error {
+	istiorbac, err := istiorabcv1alpha1.NewForConfig(config)
 	
 	rbacConfig := &v1alpha1.ClusterRbacConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -34,7 +43,35 @@ func main() {
 	}
 	
 	_ , err = istiorbac.ClusterRbacConfigs("").Create(rbacConfig)
-	if err != nil {
-		fmt.Println(err.Error())
+	
+	return err
+}
+
+func policyTest(config rest.Config) error {
+	authn, err := istioauthnalpha1.NewForConfig(config)
+	
+	originAuthenticationMethod := authnv1alpha1.OriginAuthenticationMethod {
+		Jwt: &authnv1alpha1.Jwt {
+			Issuer: "http://10.10.111.45:31393/auth/realms/lbj",
+			JwksUri: "http://10.10.111.45:31393/auth/realms/lbj/protocol/openid-connect/certs",
+		},
 	}
+	
+	policy := &authnv1alpha1.Policy{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "istio-test",
+			Name:            "policy-istio-test",
+			Labels: map[string]string{
+				"application": "application-test",
+			},
+		},
+		Spec: authnv1alpha1.PolicySpec {
+			Origins: []authnv1alpha1.OriginAuthenticationMethod{originAuthenticationMethod},
+			PrincipalBinding: authnv1alpha1.USE_ORIGIN,
+		},
+	}
+	
+	_, err = authn.Policies("").Create(config)
+	
+	return err
 }
