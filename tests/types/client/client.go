@@ -72,7 +72,7 @@ func policyTest(config rest.Config) error {
 		},
 	}
 	
-	_, err = authn.Policies("").Create(config)
+	_, err = authn.Policies("").Create(policy)
 	
 	return err
 }
