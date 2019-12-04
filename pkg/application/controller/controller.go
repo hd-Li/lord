@@ -97,5 +97,8 @@ func (c *controller)sync(key string, app *v3.Application) (runtime.Object, error
 
 func (c *controller)syncWorkload (app *v3.Application) error {
 	resourceType := "deployment"
-	config := getWorkloadConfig(app *v3.Application)
+	
+	if resourceType == "deployment" {
+		deploy, err := getDeployObject(app *v3.Application)
+	} 
 }
