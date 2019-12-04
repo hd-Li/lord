@@ -9,6 +9,7 @@ import (
 	"github.com/lord/types/pkg/istio/apis/rbac/v1alpha1"
 	authnv1alpha1 "github.com/lord/types/pkg/istio/apis/authentication/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 )
 
 var (
