@@ -96,9 +96,24 @@ func (c *controller)sync(key string, app *v3.Application) (runtime.Object, error
 }
 
 func (c *controller)syncWorkload (app *v3.Application) error {
-	resourceType := "deployment"
+	var f func(*v3.Component, *v3.Application) (runtime.Object, error) 
 	
-	if resourceType == "deployment" {
-		deploy, err := getDeployObject(app *v3.Application)
-	} 
+	componentCount := len(app.Spec.Components)
+	if componentCount == 0 {
+		return nil
+	}
+	
+	for i := 0; i < componentCount; i++ {
+		resourceType := "deployment"
+		if resourceType == "deployment" {
+			f = GetDeployObject
+		}
+		component := &app.Spec.Components[i]
+		object, err := f(component, app)
+	}
+	
+	return nil
+}
+
+func (c *controller)syncStatus (app  *v3.Application) {
 }

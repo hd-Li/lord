@@ -143,6 +143,7 @@ type WorkloadType string
 
 type Component struct {
 	Name       string      `json:"name"`
+	Version    string      `json:"version,omitempty"`
 	Parameters []Parameter `json:"parameters,omitempty"`
 
 	WorkloadType WorkloadType `json:"workloadType"`
