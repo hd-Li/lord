@@ -43,6 +43,40 @@ func (c *controller)sync(key string, app *v3.Application) (runtime.Object, error
 	if app == nil {
 		return nil, nil
 	}
+	
+	var trusted bool = false
+	var f func(*v3.Component, *v3.Application) (runtime.Object, error) 
+	
+	components := app.Spec.Components
+	if len(components) == 0 {
+		return nil, nil
+	}
+	
+	if len(components[0].Containers) == 0 {
+		trusted = true
+	}
+	
+	for i, component := range components {
+		if trusted == false {
+			resourceWorkloadType := "deployment"
+			if resourceType == "deployment" {
+				f = GetDeployObject
+			}
+			object, err := f(component, app)
+		}
+				
+	}	
+}
+
+func (c *controller)syncWorkload (app *v3.Application) error {
+	
+	return nil
+}
+
+func (c *controller)syncStatus (app  *v3.Application) {
+}
+
+func tmp(){
 	NamespaceCommonCheck(key)
 	splitted := strings.Split(key, "/")
 	namespace := splitted[0]
@@ -93,27 +127,4 @@ func (c *controller)sync(key string, app *v3.Application) (runtime.Object, error
 		fmt.Printf("create deploy error: %s", err.Error())
 	}
 	return nil, nil
-}
-
-func (c *controller)syncWorkload (app *v3.Application) error {
-	var f func(*v3.Component, *v3.Application) (runtime.Object, error) 
-	
-	componentCount := len(app.Spec.Components)
-	if componentCount == 0 {
-		return nil
-	}
-	
-	for i := 0; i < componentCount; i++ {
-		resourceType := "deployment"
-		if resourceType == "deployment" {
-			f = GetDeployObject
-		}
-		component := &app.Spec.Components[i]
-		object, err := f(component, app)
-	}
-	
-	return nil
-}
-
-func (c *controller)syncStatus (app  *v3.Application) {
 }
