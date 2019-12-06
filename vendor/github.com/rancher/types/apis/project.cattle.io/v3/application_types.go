@@ -109,7 +109,7 @@ type EnvVar struct {
 
 type Port struct {
 	Name          string `json:"name"`
-	ContainerPort int    `json:"containerPort"`
+	ContainerPort int32    `json:"containerPort"`
 	Protocol      string `json:"protocol"`
 }
 
@@ -173,6 +173,7 @@ type SecurityContext struct{}
 
 type ConfigFile struct {
 	Path      string `json:"path"`
+	FileName  string `json:"fileName"`
 	Value     string `json:"value"`
 	FromParam string `json:"fromParam,omitempty"`
 }
@@ -239,7 +240,7 @@ type ExecAction struct {
 type PullPolicy string
 
 type ApplicationStatus struct {
-	ComponentResource []ComponentResources `json:"componentResource,omitempty"`
+	ComponentResource  map[string]ComponentResources `json:"componentResource,omitempty"`
 }
 
 type ComponentResources struct {

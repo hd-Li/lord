@@ -11,7 +11,7 @@ func NameSpaceCommonCheck(ns string) {
 	clusterconfig
 }
 
-func SetupOwnerForResource(objMeta *metav1.ObjectMeta, app *v3.Application) {
+func GetOwnerRef(app *v3.Application) metav1.OwnerReference {
 	ownerRef := metav1.OwnerReference{
 		Name:       app.Namespace + ":" + app.Name,
 		APIVersion: app.APIVersion,
@@ -19,5 +19,5 @@ func SetupOwnerForResource(objMeta *metav1.ObjectMeta, app *v3.Application) {
 		Kind:       app.Kind,
 	}
 	
-	objMeta.OwnerReferences = append(objMeta.OwnerReferences, ownerRef)
+	return ownerRef
 }
