@@ -11,7 +11,7 @@ import (
 func NewDeployObject(component *v3.Component, app *v3.Application) appsv1beta2.Deployment {
 	ownerRef := GetOwnerRef(app)
 	containers, _ := getContainers(component)
-	deploy = appsv1beta2.Deployment {
+	deploy := appsv1beta2.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
@@ -42,13 +42,13 @@ func NewDeployObject(component *v3.Component, app *v3.Application) appsv1beta2.D
 	return deploy
 }
 
-func getContainers(component *v3.Component) ([]v3.ComponentContainer, error) {
-	var containers []v3.ComponentContainer
+func getContainers(component *v3.Component) ([]corev1.Container, error) {
+	var containers []corev1.Container
 	
 	for _, cc := range component.Containers {
 		ports := getContainerPorts(cc)
-		envs := getContanerEnvs(cc)
-		resources := getContanerResources(cc)
+		envs := getContainerEnvs(cc)
+		resources := getContainerResources(cc)
 		
 		container := corev1.Container {
 			Name: cc.Name,
@@ -57,18 +57,16 @@ func getContainers(component *v3.Component) ([]v3.ComponentContainer, error) {
 			Args: cc.Args,
 			Ports: ports,
 			Env: envs,
-			Resources, resources,
+			Resources: resources,
 		}
+		
+		containers = append(containers, container)
 	}
 	
 	return containers, nil
 }
 
 func getContainerResources(cc v3.ComponentContainer) corev1.ResourceRequirements {
-	if cc.Resources == nil {
-		return nil
-	}
-	
 	resources := map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU: resource.MustParse(cc.Resources.Cpu),
 		corev1.ResourceMemory: resource.MustParse(cc.Resources.Memory),

@@ -61,7 +61,7 @@ func policyTest(config rest.Config) error {
 	policy := &authnv1alpha1.Policy{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       "istio-test",
-			Name:            "default",
+			Name:            "istio-test-policy",
 			Labels: map[string]string{
 				"application": "application-test",
 			},
