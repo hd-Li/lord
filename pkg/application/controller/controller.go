@@ -175,7 +175,7 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 	
 	_, err = c.clusterconfigClient.Update(clusterrbacconfig)
 	if err != nil{
-		fmt.Println(err.Error())
+		log.Fatal(err.Error())
 		return err
 	}
 	
