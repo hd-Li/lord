@@ -105,7 +105,7 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 	}
 	
 	for _, component := range components {
-		if app.Status.ComponentResource[component.Name].ComponentId == "" {
+		if _, ok := app.Status.ComponentResource[component.Name]; !ok {
 			app.Status.ComponentResource[component.Name] = v3.ComponentResources{
 				ComponentId: app.Name + ":" + component.Name,
 			}
