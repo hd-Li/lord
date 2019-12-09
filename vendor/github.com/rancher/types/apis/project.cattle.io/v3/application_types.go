@@ -1,8 +1,6 @@
 package v3
 
 import (
-	"reflect"
-	
 	"github.com/rancher/norman/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

@@ -22,13 +22,13 @@ func NewDeployObject(component *v3.Component, app *v3.Application) appsv1beta2.D
 		Spec: appsv1beta2.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": app.Name + "-" + component.Name + "-" + "deployment",
+					"app": app.Name + "-" + component.Name + "-" + "workload",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": app.Name + "-" + component.Name + "-" + "deployment",
+						"app": app.Name + "-" + component.Name + "-" + "workload",
 						"version": component.Version,
 					},
 				},
