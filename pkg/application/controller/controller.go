@@ -152,7 +152,7 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 		}
 	}
 	
-	cfg, err := c.clusterconfigLister.Get(ns, "default")
+	cfg, err := c.clusterconfigLister.Get("istio-system", "default")
 	
 	if errors.IsNotFound(err) {
 		clusterConfig := NewClusterRbacConfig(app, nsObject)
@@ -160,8 +160,6 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 		if err != nil {
 			return err
 		}
-		
-		return nil
 	}
 	
 	
