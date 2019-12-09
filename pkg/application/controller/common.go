@@ -70,7 +70,7 @@ func NewPolicyObject(app *v3.Application, ns *corev1.Namespace) istioauthnv1alph
 	realm := os.Getenv("AUTHN_REALM")
 	
 	issuer:= authnEndpoint + "/auth/realms/" + realm
-	uri := authnEndpoint + "/protocol/openid-connect/certs"
+	uri := issuer + "/protocol/openid-connect/certs"
 	
 	originAuthenticationMethod := istioauthnv1alphav1.OriginAuthenticationMethod {
 		Jwt: &istioauthnv1alphav1.Jwt {
