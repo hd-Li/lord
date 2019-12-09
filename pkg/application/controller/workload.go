@@ -67,9 +67,20 @@ func getContainers(component *v3.Component) ([]corev1.Container, error) {
 }
 
 func getContainerResources(cc v3.ComponentContainer) corev1.ResourceRequirements {
+	cpu := "500m"
+	mem := "200Mi"
+	
+	if cc.Resources.Cpu != "" {
+		cpu = cc.Resources.Cpu
+	}
+	
+	if cc.Resources.Memory != "" {
+		mem = cc.Resources.Memory
+	}
+	
 	resources := map[corev1.ResourceName]resource.Quantity{
-		corev1.ResourceCPU: resource.MustParse(cc.Resources.Cpu),
-		corev1.ResourceMemory: resource.MustParse(cc.Resources.Memory),
+		corev1.ResourceCPU: resource.MustParse(cpu),
+		corev1.ResourceMemory: resource.MustParse(mem),
 	}
 	
 	rr := corev1.ResourceRequirements {

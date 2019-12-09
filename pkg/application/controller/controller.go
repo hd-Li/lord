@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"log"
 	"context"
 	//"strings"
 	
@@ -130,6 +130,7 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 }
 
 func (c *controller)syncNamespaceCommon(app *v3.Application) error {
+	log.Printf("sync namespaceCommon for %s", app.Namespace + ":" + app.Name)
 	ns := app.Namespace
 	nsObject, err := c.nsClient.Get(ns, metav1.GetOptions{})
 	
@@ -145,9 +146,11 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 	
 	_, err = c.policyLister.Get(ns, "default")
 	if errors.IsNotFound(err) {
+		log.Printf("not found policy for %s", ns)
 		policy := NewPolicyObject(app, nsObject)
 		_, err = c.policyClient.Create(&policy)
 		if err != nil {
+			log.Fatal(err.Error())
 			return err
 		}
 	}
