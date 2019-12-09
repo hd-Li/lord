@@ -95,11 +95,8 @@ func NewPolicyObject(app *v3.Application, ns *corev1.Namespace) istioauthnv1alph
 }
 
 func NewClusterRbacConfig(app *v3.Application, ns *corev1.Namespace) istiorbacv1alpha1.ClusterRbacConfig {
-	ownerRef := GetOwnerRefFromNamespace(ns)
-	
 	rbacConfig := istiorbacv1alpha1.ClusterRbacConfig{
 		ObjectMeta: metav1.ObjectMeta{
-			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       "istio-system",
 			Name:            "default",
 			Labels:          map[string]string{app.Namespace: "included"},

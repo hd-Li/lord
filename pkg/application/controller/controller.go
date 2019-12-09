@@ -1,7 +1,7 @@
 package controller
 
 import (
-	//"fmt"
+	"fmt"
 	"context"
 	//"strings"
 	
@@ -158,6 +158,7 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 		clusterConfig := NewClusterRbacConfig(app, nsObject)
 		_, err = c.clusterconfigClient.Create(&clusterConfig)
 		if err != nil {
+			fmt.Println(err.Error())
 			return err
 		}
 	}
@@ -171,6 +172,7 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 	
 	_, err = c.clusterconfigClient.Update(clusterrbacconfig)
 	if err != nil{
+		fmt.Println(err.Error())
 		return err
 	}
 	
