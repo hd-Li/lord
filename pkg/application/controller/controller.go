@@ -10,9 +10,9 @@ import (
 	"github.com/rancher/types/apis/apps/v1beta2"
 	"k8s.io/apimachinery/pkg/runtime"
 	"github.com/rancher/types/apis/project.cattle.io/v3"
-	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	//appsv1beta2 "k8s.io/api/apps/v1beta2"
 	"k8s.io/apimachinery/pkg/api/errors"
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	//corev1 "k8s.io/api/core/v1"
 	istioauthnv1alpha1 "github.com/rancher/types/apis/authentication.istio.io/v1alpha1"
 	istionetworkingv1alph3 "github.com/rancher/types/apis/networking.istio.io/v1alpha3"
@@ -62,10 +62,10 @@ func Register(ctx context.Context, userContext *config.UserOnlyContext) {
 		deploymentClient:      userContext.Apps.Deployments(""),
 		serviceLister:         userContext.Core.Services("").Controller().Lister(),
 		serviceClient:         userContext.Core.Services(""),
-		virtualServiceLister   userContext.IstioNetworking.VirtualServices("").Controller().Lister(),
-		virtualServiceClient   userContext.IstioNetworking.VirtualServices(""),
-		destLister             userContext.IstioNetworking.DestinationRules("").Controller().Lister(),
-		destClient             userContext.IstioNetworking.DestinationRules(""),
+		virtualServiceLister:   userContext.IstioNetworking.VirtualServices("").Controller().Lister(),
+		virtualServiceClient:   userContext.IstioNetworking.VirtualServices(""),
+		destLister:             userContext.IstioNetworking.DestinationRules("").Controller().Lister(),
+		destClient:             userContext.IstioNetworking.DestinationRules(""),
 		configMapLister:       userContext.Core.ConfigMaps("").Controller().Lister(),
 		gatewayLister:         userContext.IstioNetworking.Gateways("").Controller().Lister(),
 		gatewayClient:         userContext.IstioNetworking.Gateways(""),
@@ -117,7 +117,8 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 			c.syncWorkload(&component, app)
 		}
 		
-		c.sync
+		c.syncService(&component, app)
+		c.syncAuthor(&component, app)
 				
 	}
 	
@@ -126,7 +127,7 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 
 func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 	ns := app.Namespace
-	nsObject, err := c.nsClient.Get(ns)
+	nsObject, err := c.nsClient.Get(ns, metav1.GetOptions{})
 	
 	gatewayName := ns + "-" + "gateway"
 	_, err = c.gatewayLister.Get(ns, gatewayName)
@@ -183,7 +184,7 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 	return nil
 }
 
-func (c *controller)syncConfigmaps(component *v3.Component, app *v3.Application) error {*v1alpha1.ServiceRole
+func (c *controller)syncConfigmaps(component *v3.Component, app *v3.Application) error {
 	/*
 	for _, cc := range component.Containers {
 		for _, conf := range cc.Config {
@@ -262,7 +263,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	
 	vsObject := NewVirtualServiceObject(component, app)
 	vsObjectString := GetObjectApplied(vsObject)
-	vsObject.Annotations[LastAppliedConfigAnnotation] = vsObejectString
+	vsObject.Annotations[LastAppliedConfigAnnotation] = vsObjectString
 	
 	vs, err := c.virtualServiceLister.Get(app.Namespace, (app.Name + "-" + component.Name + "-" + "vs"))
 	if err == nil {
@@ -279,7 +280,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 		}
 	}
 	
-	
+	return nil
 }
 
 func (c *controller)syncAuthor(component *v3.Component, app *v3.Application) error {
@@ -301,4 +302,6 @@ func (c *controller)syncAuthor(component *v3.Component, app *v3.Application) err
 			return err
 		}
 	}
+	
+	return nil
 }

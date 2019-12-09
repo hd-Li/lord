@@ -1,6 +1,7 @@
 package controller
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	"github.com/rancher/types/apis/project.cattle.io/v3"
 	istiorbacv1alpha1 "github.com/lord/types/pkg/istio/apis/rbac/v1alpha1"
@@ -16,8 +17,10 @@ func NewServiceRoleObject(app *v3.Application, ns *corev1.Namespace) istiorbacv1
 			Name:            app.Namespace + "-" + "servicerole",
 		},
 		Spec: istiorbacv1alpha1.ServiceRoleSpec {
-			Rules: istiorbacv1alpha1.AccessRule{
-				Services: []string{"*"},
+			Rules: []istiorbacv1alpha1.AccessRule{
+				istiorbacv1alpha1.AccessRule{
+					Services: []string{"*"},
+				},
 			},
 		},
 	}
@@ -29,7 +32,7 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 	ownerRef := GetOwnerRef(app)
 	var users map[string]string
 	for _, e := range component.OptTraits.WhiteList.Users {
-		map["request.auth.claims[email]"] = e
+		users["request.auth.claims[email]"] = e
 	}
 	
 	serviceRoleBinding := istiorbacv1alpha1.ServiceRoleBinding{
@@ -42,7 +45,7 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 			Subjects: []istiorbacv1alpha1.Subject{
 				istiorbacv1alpha1.Subject{
 					Properties: users,
-				}
+				},
 			},
 			RoleRef: istiorbacv1alpha1.RoleRef {
 				Kind: "ServiceRole",
@@ -50,4 +53,6 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 			},
 		},
 	}
+	
+	return serviceRoleBinding
 }

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	//"k8s.io/apimachinery/pkg/runtime"
 	"github.com/rancher/types/apis/project.cattle.io/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
@@ -115,7 +115,7 @@ func NewClusterRbacConfig(app *v3.Application, ns *corev1.Namespace) istiorbacv1
 	return rbacConfig
 }
 
-func GetObjectApplied(obj runtime.Object) string {
+func GetObjectApplied(obj interface{}) string {
 	b, _ := json.Marshal(obj)
     var out bytes.Buffer
     json.Indent(&out, b, "", "")

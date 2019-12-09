@@ -39,7 +39,7 @@ func NewVirtualServiceObject(component *v3.Component, app *v3.Application) istio
 	ownerRef := GetOwnerRef(app)
 	host := component.OptTraits.Ingress.Host
 	service := app.Name + "-" + component.Name + "-" + "service" + "." + app.Namespace + ".svc.cluster.local"
-	port := uint(component.OptTraits.Ingress.ServerPort)
+	port := uint32(component.OptTraits.Ingress.ServerPort)
 	
 	virtualService := istiov1alpha3.VirtualService {
 		ObjectMeta: metav1.ObjectMeta{
@@ -57,7 +57,7 @@ func NewVirtualServiceObject(component *v3.Component, app *v3.Application) istio
 							Destination: istiov1alpha3.Destination{
 								Host: service,
 								Port: istiov1alpha3.PortSelector{
-									number: port,
+									Number: port,
 								},
 							},
 						},
