@@ -104,6 +104,10 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 		trusted = true
 	}
 	
+	if app.Status.ComponentResource == nil {
+			app.Status.ComponentResource = map[string]v3.ComponentResources{}
+	}
+	
 	for _, component := range components {
 		if _, ok := app.Status.ComponentResource[component.Name]; !ok {
 			app.Status.ComponentResource[component.Name] = v3.ComponentResources{
