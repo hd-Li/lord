@@ -3,7 +3,6 @@ package controller
 import (
 	"log"
 	"context"
-	//"strings"
 	
 	"github.com/rancher/types/config"
 	"github.com/rancher/types/apis/core/v1"
@@ -13,7 +12,7 @@ import (
 	//appsv1beta2 "k8s.io/api/apps/v1beta2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//corev1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	istioauthnv1alpha1 "github.com/rancher/types/apis/authentication.istio.io/v1alpha1"
 	istionetworkingv1alph3 "github.com/rancher/types/apis/networking.istio.io/v1alpha3"
 	istiorbacv1alpha1 "github.com/rancher/types/apis/rbac.istio.io/v1alpha1"
@@ -89,7 +88,7 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 	
 	app := application.DeepCopy()
 	
-	c.syncNamespaceCommon(app)
+	//c.syncNamespaceCommon(app)
 	
 	//the deployed app is trusted or not
 	var trusted bool = false 
@@ -121,8 +120,8 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 			c.syncWorkload(&component, app)
 		}
 		
-		c.syncService(&component, app)
-		c.syncAuthor(&component, app)
+		//c.syncService(&component, app)
+		//c.syncAuthor(&component, app)
 				
 	}
 	
@@ -130,61 +129,82 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 }
 
 func (c *controller)syncNamespaceCommon(app *v3.Application) error {
-	log.Printf("sync namespaceCommon for %s", app.Namespace + ":" + app.Name)
-	ns := app.Namespace
-	nsObject, err := c.nsClient.Get(ns, metav1.GetOptions{})
+	log.Printf("Sync namespaceCommon for %s\n", app.Namespace + ":" + app.Name)
 	
-	gatewayName := ns + "-" + "gateway"
-	_, err = c.gatewayLister.Get(ns, gatewayName)
-	if errors.IsNotFound(err) {
-		gateway := NewGatewayObject(app, nsObject)
-		_, err = c.gatewayClient.Create(&gateway)
+	var ns *corev1.Namespace
+	var err error
+	
+	for i := 0; i < 3; i++ {
+		ns, err = c.nsClient.Get(app.Namespace, metav1.GetOptions{})
 		if err != nil {
-			return err
+			log.Printf("Get namespace object error for app %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+		}else {
+			break
 		}
 	}
-	
-	_, err = c.policyLister.Get(ns, "default")
-	if errors.IsNotFound(err) {
-		log.Printf("not found policy for %s", ns)
-		policy := NewPolicyObject(app, nsObject)
-		_, err = c.policyClient.Create(&policy)
-		if err != nil {
-			log.Fatal(err.Error())
-			return err
-		}
-	}
-	
-	cfg, err := c.clusterconfigLister.Get("istio-system", "default")
-	
-	if errors.IsNotFound(err) {
-		clusterConfig := NewClusterRbacConfig(app, nsObject)
-		_, err = c.clusterconfigClient.Create(&clusterConfig)
-		if err != nil {
-			fmt.Println(err.Error())
-			return err
-		}
-	}
-	
-	
-	clusterrbacconfig := cfg.DeepCopy()
-	if clusterrbacconfig.ObjectMeta.Labels[ns] == "" {
-		clusterrbacconfig.Spec.Inclusion.Namespaces = append(clusterrbacconfig.Spec.Inclusion.Namespaces, ns)
-		clusterrbacconfig.ObjectMeta.Labels[ns] = "included"
-	}
-	
-	_, err = c.clusterconfigClient.Update(clusterrbacconfig)
+	_, err = c.gatewayLister.Get(app.Namespace, (app.Namespace + "-" + "gateway"))
 	if err != nil{
-		log.Fatal(err.Error())
-		return err
+		log.Printf("Get gateway error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+		
+		if errors.IsNotFound(err) {
+			gateway := NewGatewayObject(app, ns)
+			_, err = c.gatewayClient.Create(&gateway)
+			if err != nil {
+				log.Printf("Create gateway error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+			}
+		}
+	}
+	log.Printf("Sync gateway done for namespace %s", app.Namespace)
+	
+	_, err = c.policyLister.Get(app.Namespace, "default")
+	if err != nil {
+		log.Printf("Get policy for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+		if errors.IsNotFound(err) {
+			policy := NewPolicyObject(app, ns)
+			_, err = c.policyClient.Create(&policy)
+			if err != nil {
+				log.Printf("Create policy error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+			}
+		}
+	}
+	log.Printf("Sync policy done for %s", app.Namespace)
+	
+	cfg, err := c.clusterconfigLister.Get("", "default")
+	if err != nil{
+		log.Printf("Get clusterrbacconfig for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+		if errors.IsNotFound(err) {
+			clusterConfig := NewClusterRbacConfig(app, ns)
+			_, err = c.clusterconfigClient.Create(&clusterConfig)
+			if err != nil {
+				log.Printf("Create clusterrbacconfig error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+			}
+		}
 	}
 	
-	svcRoleObject := NewServiceRoleObject(app, nsObject)
-	_, err = c.serviceRoleLister.Get(app.Namespace, app.Namespace + "servicerole")
-	if errors.IsNotFound(err) {
-		_, err = c.serviceRoleClient.Create(&svcRoleObject)
-		if err != nil {
-			return err
+	
+	if cfg != nil {
+		clusterrbacconfig := cfg.DeepCopy()
+		if _, ok := clusterrbacconfig.ObjectMeta.Labels[app.Namespace]; !ok {
+			clusterrbacconfig.Spec.Inclusion.Namespaces = append(clusterrbacconfig.Spec.Inclusion.Namespaces, app.Namespace)
+			clusterrbacconfig.ObjectMeta.Labels[app.Namespace] = "included"
+			clusterrbacconfig.Namespace = "default" //avoid the client-go bug
+			_, err = c.clusterconfigClient.Update(clusterrbacconfig)
+			if err != nil {
+				log.Printf("Update clusterrbacconfig error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+			}
+		}
+	}
+	log.Printf("Sync clusterrbacconfig done for %s", app.Namespace)
+	
+	_, err = c.serviceRoleLister.Get(app.Namespace, app.Namespace + "-" + "servicerole")
+	if err != nil {
+		log.Printf("Get serviceRole for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+		if errors.IsNotFound(err) {
+			svcRoleObject := NewServiceRoleObject(app, ns)
+			_, err = c.serviceRoleClient.Create(&svcRoleObject)
+			if err != nil {
+				log.Printf("Create servicerole error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+			}
 		}
 	}
 	
@@ -221,6 +241,7 @@ func (c *controller)syncStatus (app  *v3.Application) {
 }
 
 func (c *controller)syncDeployment(component *v3.Component, app *v3.Application) error {
+	log.Printf("sync deploy for %s", app.Namespace + ":" + component.Name)
 	object := NewDeployObject(component, app)
 	appliedString := GetObjectApplied(object)
 	object.Annotations[LastAppliedConfigAnnotation] = appliedString
@@ -228,9 +249,10 @@ func (c *controller)syncDeployment(component *v3.Component, app *v3.Application)
 	deploy, err := c.deploymentLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "workload")
 	
 	if errors.IsNotFound(err) {
+		log.Printf("not found deploy: %s", err.Error())
 		_, err = c.deploymentClient.Create(&object)
-		if err != nil {
-			return err
+		if errors.IsAlreadyExists(err){
+			
 		}
 		
 		return nil
@@ -252,17 +274,21 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	object.Annotations[LastAppliedConfigAnnotation] = objectString
 	
 	service, err := c.serviceLister.Get(app.Namespace, app.Name + component.Name + "-" + "service")
+	if err != nil {
+		log.Printf("Get service error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.serviceClient.Create(&object)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	if err == nil {
 		if service.Annotations[LastAppliedConfigAnnotation] != objectString {
 			_, err = c.serviceClient.Update(&object)
 			if err != nil {
 				return err
 			}
-		}
-	}else if errors.IsNotFound(err) {
-		_, err = c.serviceClient.Create(&object)
-		if err != nil {
-			return err
 		}
 	}
 	

@@ -29,7 +29,7 @@ const MetricsQueueEnv = "NORMAN_QUEUE_METRICS"
 const MetricsReflectorEnv = "NORMAN_REFLECTOR_METRICS"
 
 var (
-	resyncPeriod = 2 * time.Hour
+	resyncPeriod = 10 * time.Second
 )
 
 // Override the metrics providers
@@ -171,7 +171,6 @@ func (g *genericController) sync(ctx context.Context) error {
 	})
 
 	logrus.Debugf("Syncing %s Controller", g.name)
-
 	go g.informer.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), g.informer.HasSynced) {

@@ -257,6 +257,9 @@ func (w *UserOnlyContext) controllers() []controller.Starter {
 		w.BatchV1,
 		w.BatchV1Beta1,
 		w.Monitoring,
+		w.IstioAuthn,
+		w.IstioNetworking,
+		w.IstioRbac,
 	}
 }
 

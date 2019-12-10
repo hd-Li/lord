@@ -15,6 +15,7 @@ func NewServiceRoleObject(app *v3.Application, ns *corev1.Namespace) istiorbacv1
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
 			Name:            app.Namespace + "-" + "servicerole",
+			Annotations:     map[string]string{},
 		},
 		Spec: istiorbacv1alpha1.ServiceRoleSpec {
 			Rules: []istiorbacv1alpha1.AccessRule{
@@ -30,7 +31,8 @@ func NewServiceRoleObject(app *v3.Application, ns *corev1.Namespace) istiorbacv1
 
 func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorbacv1alpha1.ServiceRoleBinding {
 	ownerRef := GetOwnerRef(app)
-	var users map[string]string
+	users := map[string]string{}
+	
 	for _, e := range component.OptTraits.WhiteList.Users {
 		users["request.auth.claims[email]"] = e
 	}
@@ -40,6 +42,7 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
 			Name:            app.Name + "-" + component.Name + "-" + "servicerolebinding",
+			Annotations:     map[string]string{},
 		},
 		Spec: istiorbacv1alpha1.ServiceRoleBindingSpec {
 			Subjects: []istiorbacv1alpha1.Subject{

@@ -97,9 +97,10 @@ func NewPolicyObject(app *v3.Application, ns *corev1.Namespace) istioauthnv1alph
 func NewClusterRbacConfig(app *v3.Application, ns *corev1.Namespace) istiorbacv1alpha1.ClusterRbacConfig {
 	rbacConfig := istiorbacv1alpha1.ClusterRbacConfig{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:       "istio-system",
+			Namespace:       "default",
 			Name:            "default",
 			Labels:          map[string]string{app.Namespace: "included"},
+			Annotations:     map[string]string{},
 		},
 		Spec: istiorbacv1alpha1.RbacConfigSpec {
 			Mode: istiorbacv1alpha1.ON_WITH_INCLUSION,

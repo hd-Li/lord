@@ -23,6 +23,7 @@ func NewServiceObject(component *v3.Component, app *v3.Application) corev1.Servi
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
 			Name:            app.Name + "-" + component.Name + "-" + "service",
+			Annotations:     map[string]string{},
 		},
 		Spec: corev1.ServiceSpec {
 			Selector: map[string]string {
@@ -46,6 +47,7 @@ func NewVirtualServiceObject(component *v3.Component, app *v3.Application) istio
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
 			Name:            app.Name + "-" + component.Name + "-" + "vs",
+			Annotations:     map[string]string{},
 		},
 		Spec: istiov1alpha3.VirtualServiceSpec {
 			Gateways: []string{(app.Namespace + "-" + "gateway")},

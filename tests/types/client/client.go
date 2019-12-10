@@ -5,6 +5,7 @@ import (
 	
 	istiorabcv1alpha1 "github.com/rancher/types/apis/rbac.istio.io/v1alpha1"
 	istioauthnalpha1 "github.com/rancher/types/apis/authentication.istio.io/v1alpha1"
+	istionetworkingv1alph3 "github.com/rancher/types/apis/networking.istio.io/v1alpha3"
 	"k8s.io/client-go/tools/clientcmd"
 	"github.com/lord/types/pkg/istio/apis/rbac/v1alpha1"
 	authnv1alpha1 "github.com/lord/types/pkg/istio/apis/authentication/v1alpha1"
@@ -18,7 +19,10 @@ var (
 func main() {
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 	
-	err = policyTest(*restConfig)
+	client, err := istionetworkingv1alph3.NewForConfig(*restConfig)
+	gw := client.Gateways("").Controller().Lister
+	_, err = gw.Get("hd-only", "hd-only-gateway")
+	fmt.Println(gw)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
