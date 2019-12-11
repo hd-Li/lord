@@ -300,13 +300,13 @@ type OriginAuthenticationMethod struct {
 }
 
 // Associates authentication with request principal.
-type PrincipalBinding int32
+type PrincipalBinding string
 
 const (
 	// Principal will be set to the identity from peer authentication.
-	USE_PEER PrincipalBinding = 0
+	USE_PEER PrincipalBinding = "USE_PEER"
 	// Principal will be set to the identity from origin authentication.
-	USE_ORIGIN PrincipalBinding = 1
+	USE_ORIGIN PrincipalBinding = "USE_ORIGIN"
 )
 
 type PolicySpec struct {
