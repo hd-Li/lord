@@ -13,6 +13,7 @@ func NewServiceObject(component *v3.Component, app *v3.Application) corev1.Servi
 	serverPort := component.OptTraits.Ingress.ServerPort
 	
 	port := corev1.ServicePort {
+		Name: "http" + "-" + component.Name,
 		Port: serverPort,
 		TargetPort: intstr.FromInt(int(serverPort)),
 		Protocol: corev1.ProtocolTCP,

@@ -2,25 +2,24 @@ package controller
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	corev1 "k8s.io/api/core/v1"
 	"github.com/rancher/types/apis/project.cattle.io/v3"
 	istiorbacv1alpha1 "github.com/lord/types/pkg/istio/apis/rbac/v1alpha1"
 )
 
-func NewServiceRoleObject(app *v3.Application, ns *corev1.Namespace) istiorbacv1alpha1.ServiceRole {
-	ownerRef := GetOwnerRefFromNamespace(ns)
+func NewServiceRoleObject(component *v3.Component, app *v3.Application) istiorbacv1alpha1.ServiceRole {
+	ownerRef := GetOwnerRef(app)
 	
 	serviceRole := istiorbacv1alpha1.ServiceRole {
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
-			Name:            app.Namespace + "-" + "servicerole",
+			Name:            app.Name + "-" + component.Name + "-" + "servicerole",
 			Annotations:     map[string]string{},
 		},
 		Spec: istiorbacv1alpha1.ServiceRoleSpec {
 			Rules: []istiorbacv1alpha1.AccessRule{
 				istiorbacv1alpha1.AccessRule{
-					Services: []string{"*"},
+					Services: []string{(app.Name+"-"+component.Name+"-"+"service"+"."+app.Namespace+".svc.cluster.local")},
 				},
 			},
 		},
@@ -52,7 +51,7 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 			},
 			RoleRef: istiorbacv1alpha1.RoleRef {
 				Kind: "ServiceRole",
-				Name: app.Namespace + "-" + "servicerole",
+				Name: app.Name+"-"+component.Name+"-"+"service"+"."+app.Namespace+".svc.cluster.local",
 			},
 		},
 	}

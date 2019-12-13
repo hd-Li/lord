@@ -88,7 +88,7 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 	
 	app := application.DeepCopy()
 	
-	//c.syncNamespaceCommon(app)
+	c.syncNamespaceCommon(app)
 	
 	//the deployed app is trusted or not
 	var trusted bool = false 
@@ -120,8 +120,8 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 			c.syncWorkload(&component, app)
 		}
 		
-		//c.syncService(&component, app)
-		//c.syncAuthor(&component, app)
+		c.syncService(&component, app)
+		c.syncAuthor(&component, app)
 				
 	}
 	
@@ -196,18 +196,6 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 	}
 	log.Printf("Sync clusterrbacconfig done for %s", app.Namespace)
 	
-	_, err = c.serviceRoleLister.Get(app.Namespace, app.Namespace + "-" + "servicerole")
-	if err != nil {
-		log.Printf("Get serviceRole for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
-		if errors.IsNotFound(err) {
-			svcRoleObject := NewServiceRoleObject(app, ns)
-			_, err = c.serviceRoleClient.Create(&svcRoleObject)
-			if err != nil {
-				log.Printf("Create servicerole error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
-			}
-		}
-	}
-	
 	return nil
 }
 
@@ -265,6 +253,7 @@ func (c *controller)syncDeployment(component *v3.Component, app *v3.Application)
 		}
 	}
 	
+	log.Printf("sync deploy for %s done!", app.Namespace + ":" + component.Name)
 	return nil
 }
 
@@ -273,43 +262,58 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	objectString := GetObjectApplied(object)
 	object.Annotations[LastAppliedConfigAnnotation] = objectString
 	
-	service, err := c.serviceLister.Get(app.Namespace, app.Name + component.Name + "-" + "service")
+	service, err := c.serviceLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "service")
 	if err != nil {
 		log.Printf("Get service error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
 		if errors.IsNotFound(err) {
 			_, err = c.serviceClient.Create(&object)
 			if err != nil {
-				return err
+				log.Printf("Create service error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
 			}
 		}
 	}
-	if err == nil {
+	
+	if service != nil {
 		if service.Annotations[LastAppliedConfigAnnotation] != objectString {
-			_, err = c.serviceClient.Update(&object)
+			c.serviceClient.DeleteNamespaced(service.Namespace, service.Name, &metav1.DeleteOptions{})
+			_, err = c.serviceClient.Create(&object)
 			if err != nil {
-				return err
+				log.Printf("Update(Create) service error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
 			}
 		}
 	}
 	
-	
+	_, err = c.serviceRoleLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "servicerole")
+	if err != nil {
+		log.Printf("Get serviceRole for %s error : %s\n", (app.Name + ":" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			svcRoleObject := NewServiceRoleObject(component, app)
+			_, err = c.serviceRoleClient.Create(&svcRoleObject)
+			if err != nil {
+				log.Printf("Create servicerole error for %s error : %s\n", (app.Name + ":" + component.Name), err.Error())
+			}
+		}
+	}
 	
 	vsObject := NewVirtualServiceObject(component, app)
 	vsObjectString := GetObjectApplied(vsObject)
 	vsObject.Annotations[LastAppliedConfigAnnotation] = vsObjectString
 	
 	vs, err := c.virtualServiceLister.Get(app.Namespace, (app.Name + "-" + component.Name + "-" + "vs"))
-	if err == nil {
+	if err != nil {
+		if errors.IsNotFound(err) {
+			_, err = c.virtualServiceClient.Create(&vsObject)
+			if err != nil {
+				log.Printf("Create VirtualService error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+			}
+		}
+	}
+	if vs != nil {
 		if vs.Annotations[LastAppliedConfigAnnotation] !=  vsObjectString{
 			_, err = c.virtualServiceClient.Update(&vsObject)
 			if err != nil {
-				return err
+				log.Printf("Update VirtualService error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
 			}
-		}
-	}else if errors.IsNotFound(err) {
-		_, err = c.virtualServiceClient.Create(&vsObject)
-		if err != nil {
-			return err
 		}
 	}
 	
