@@ -51,7 +51,7 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 			},
 			RoleRef: istiorbacv1alpha1.RoleRef {
 				Kind: "ServiceRole",
-				Name: app.Name+"-"+component.Name+"-"+"service"+"."+app.Namespace+".svc.cluster.local",
+				Name: app.Name+"-"+component.Name+"-"+"servicerole",
 			},
 		},
 	}

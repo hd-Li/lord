@@ -4,13 +4,18 @@ import (
 	"log"
 	"context"
 	
+	
+	//typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"github.com/rancher/types/config"
 	"github.com/rancher/types/apis/core/v1"
 	"github.com/rancher/types/apis/apps/v1beta2"
 	"k8s.io/apimachinery/pkg/runtime"
+	//utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"github.com/rancher/types/apis/project.cattle.io/v3"
 	//appsv1beta2 "k8s.io/api/apps/v1beta2"
 	"k8s.io/apimachinery/pkg/api/errors"
+	//"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	istioauthnv1alpha1 "github.com/rancher/types/apis/authentication.istio.io/v1alpha1"
@@ -48,9 +53,19 @@ type controller struct {
 	serviceRoleClient    istiorbacv1alpha1.ServiceRoleInterface
 	serviceRoleBindingLister istiorbacv1alpha1.ServiceRoleBindingLister
 	serviceRoleBindingClient istiorbacv1alpha1.ServiceRoleBindingInterface
+	
+	recorder    record.EventRecorder
 }
 
 func Register(ctx context.Context, userContext *config.UserOnlyContext) {
+	/*
+	utilruntime.Must(v3.AddToScheme(scheme.Scheme))
+	log.Println("Creating event broadcaster")
+	eventBroadcaster := record.NewBroadcaster()
+	//eventBroadcaster.StartLogging(fmt.Printf)
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: userContext.Core.Events("")})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "application-controllere"})
+	*/
 	c := controller {
 		applicationClient:     userContext.Project.Applications(""),
 		applicationLister:     userContext.Project.Applications("").Controller().Lister(),
