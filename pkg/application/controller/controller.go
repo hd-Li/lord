@@ -332,6 +332,32 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 		}
 	}
 	
+	if component.DevTraits.IngressLB.ConsistentType != nil || component.DevTraits.IngressLB.LBType != nil {
+		destObject := NewDestinationruleObject(component, app)
+		destObjectString := GetObjectApplied(destObject)
+		destObject.Annotations[LastAppliedConfigAnnotation] = destObjectString
+		
+		dest, err := c.destLister.Get(app.Namespace, (app.Name + "-" + component.Name + "-" + "destinationrule"))
+		if err != nil {
+			log.Printf("Get DestinationRule error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+			if errors.IsNotFound(err) {
+				_, err = c.destClient.Create(&destObject)
+				if err != nil {
+					log.Printf("Create DestinationRule error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+				}
+			}
+		}
+		
+		if dest != nil {
+			if dest.Annotations[LastAppliedConfigAnnotation] != destObjectString {
+				_, err := c.destClient.Update(&destObject)
+				if err != nil {
+					log.Printf("Update DestinationRule error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+				}
+			}
+		}
+	}
+	
 	return nil
 }
 

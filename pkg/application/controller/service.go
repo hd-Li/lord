@@ -72,3 +72,48 @@ func NewVirtualServiceObject(component *v3.Component, app *v3.Application) istio
 	
 	return virtualService
 }
+
+func NewDestinationruleObject(component *v3.Component, app *v3.Application) istiov1alpha3.DestinationRule {
+	ownerRef := GetOwnerRef(app)
+	service := app.Name + "-" + component.Name + "-" + "service" + "." + app.Namespace + ".svc.cluster.local"
+	
+	var lbSetting  *istiov1alpha3.LoadBalancerSettings
+	if component.DevTraits.IngressLB.ConsistentType != nil {
+		lbSetting = &istiov1alpha3.LoadBalancerSettings {
+			ConsistentHash: &istiov1alpha3.ConsistentHashLB {
+				UseSourceIP: true,
+			},
+		}	
+	}else if lbType := component.DevTraits.IngressLB.LBType; lbType != nil {
+		var simplb  istiov1alpha3.SimpleLB
+		switch lbType {
+			case "rr":
+			   simplb = istiov1alpha3.SimpleLBRoundRobin
+			case "leastConn":
+			   simplb = istiov1alpha3.SimpleLBLeastConn
+			case "random":
+			   simplb = istiov1alpha3.SimpleLBRandom
+		}
+		
+		lbSetting = &istiov1alpha3.LoadBalancerSettings {
+			Simple: simplb,
+		}
+	}
+	
+	destinationrule := istiov1alpha3.DestinationRule {
+		ObjectMeta: metav1.ObjectMeta{
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
+			Namespace:       app.Namespace,
+			Name:            app.Name + "-" + component.Name + "-" + "destinationrule",
+			Annotations:     map[string]string{},
+		},
+		Spec: istiov1alpha3.DestinationRuleSpec {
+			Host: service,
+			TrafficPolicy: &istiov1alpha3.TrafficPolicy {
+				LoadBalancer: lbSetting,
+			},
+		},
+	}
+	
+	return destinationrule
+}

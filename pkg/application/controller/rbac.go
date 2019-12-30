@@ -30,10 +30,17 @@ func NewServiceRoleObject(component *v3.Component, app *v3.Application) istiorba
 
 func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorbacv1alpha1.ServiceRoleBinding {
 	ownerRef := GetOwnerRef(app)
-	users := map[string]string{}
+	
+	subjects := []istiorbacv1alpha1.Subject{}
 	
 	for _, e := range component.OptTraits.WhiteList.Users {
-		users["request.auth.claims[email]"] = e
+		subject := istiorbacv1alpha1.Subject{
+			Properties: map[string]string{
+				"request.auth.claims[email]": e,
+			},
+		}
+		
+		subjects = append(subjects, subject)
 	}
 	
 	serviceRoleBinding := istiorbacv1alpha1.ServiceRoleBinding{
@@ -44,11 +51,7 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 			Annotations:     map[string]string{},
 		},
 		Spec: istiorbacv1alpha1.ServiceRoleBindingSpec {
-			Subjects: []istiorbacv1alpha1.Subject{
-				istiorbacv1alpha1.Subject{
-					Properties: users,
-				},
-			},
+			Subjects: subjects,
 			RoleRef: istiorbacv1alpha1.RoleRef {
 				Kind: "ServiceRole",
 				Name: app.Name+"-"+component.Name+"-"+"servicerole",

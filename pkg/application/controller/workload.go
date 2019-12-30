@@ -112,7 +112,7 @@ func getContainerPorts(cc v3.ComponentContainer) []corev1.ContainerPort {
 	for _, ccp := range cc.Ports {
 		var proto corev1.Protocol
 		
-		if ccp.Protocol == "tcp" {
+		if ccp.Protocol == "tcp" || ccp.Protocol == ""{
 			proto = corev1.ProtocolTCP
 		}else {
 			proto = corev1.ProtocolUDP
