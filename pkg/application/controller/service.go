@@ -78,13 +78,13 @@ func NewDestinationruleObject(component *v3.Component, app *v3.Application) isti
 	service := app.Name + "-" + component.Name + "-" + "service" + "." + app.Namespace + ".svc.cluster.local"
 	
 	var lbSetting  *istiov1alpha3.LoadBalancerSettings
-	if component.DevTraits.IngressLB.ConsistentType != nil {
+	if component.DevTraits.IngressLB.ConsistentType != "" {
 		lbSetting = &istiov1alpha3.LoadBalancerSettings {
 			ConsistentHash: &istiov1alpha3.ConsistentHashLB {
 				UseSourceIP: true,
 			},
 		}	
-	}else if lbType := component.DevTraits.IngressLB.LBType; lbType != nil {
+	}else if lbType := component.DevTraits.IngressLB.LBType; lbType != "" {
 		var simplb  istiov1alpha3.SimpleLB
 		switch lbType {
 			case "rr":

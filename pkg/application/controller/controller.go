@@ -332,7 +332,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 		}
 	}
 	
-	if component.DevTraits.IngressLB.ConsistentType != nil || component.DevTraits.IngressLB.LBType != nil {
+	if component.DevTraits.IngressLB.ConsistentType != "" || component.DevTraits.IngressLB.LBType != "" {
 		destObject := NewDestinationruleObject(component, app)
 		destObjectString := GetObjectApplied(destObject)
 		destObject.Annotations[LastAppliedConfigAnnotation] = destObjectString
