@@ -44,6 +44,10 @@ func NewServiceRoleBinding(component *v3.Component, app *v3.Application) istiorb
 	}
 	
 	serviceRoleBinding := istiorbacv1alpha1.ServiceRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ServiceRoleBinding",
+			APIVersion: "rbac.istio.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,

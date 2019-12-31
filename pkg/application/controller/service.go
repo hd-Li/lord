@@ -44,6 +44,10 @@ func NewVirtualServiceObject(component *v3.Component, app *v3.Application) istio
 	port := uint32(component.OptTraits.Ingress.ServerPort)
 	
 	virtualService := istiov1alpha3.VirtualService {
+		TypeMeta: metav1.TypeMeta{
+			Kind: "VirtualService",
+			APIVersion: "networking.istio.io/v1alpha3",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,

@@ -185,6 +185,7 @@ func (p *ObjectClient) Update(name string, o runtime.Object) (runtime.Object, er
 		Body(o).
 		Do().
 		Into(result)
+
 	return result, err
 }
 

@@ -251,24 +251,27 @@ func (c *controller)syncDeployment(component *v3.Component, app *v3.Application)
 	
 	deploy, err := c.deploymentLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "workload")
 	
-	if errors.IsNotFound(err) {
-		log.Printf("not found deploy: %s", err.Error())
-		_, err = c.deploymentClient.Create(&object)
-		if errors.IsAlreadyExists(err){
-			
-		}
-		
-		return nil
-	}
-	
-	if deploy.Annotations[LastAppliedConfigAnnotation] != appliedString {
-		_, err = c.deploymentClient.Update(&object)
-		if err != nil {
-			return err
+	if err != nil {
+		log.Printf("Get deploy for %s Error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.deploymentClient.Create(&object)
+			if err != nil {
+				log.Printf("Create deploy for %s Error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+			}
 		}
 	}
 	
-	log.Printf("sync deploy for %s done!", app.Namespace + ":" + component.Name)
+	if deploy != nil {
+		if deploy.Annotations[LastAppliedConfigAnnotation] != appliedString {
+			_, err = c.deploymentClient.Update(&object)
+			if err != nil {
+				log.Printf("Update deploy for %s Error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+			}
+		}
+	}
+	
+	log.Printf("sync deploy for %s done!", app.Namespace + ":" + app.Name + ":" + component.Name)
+	
 	return nil
 }
 
@@ -279,11 +282,11 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	
 	service, err := c.serviceLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "service")
 	if err != nil {
-		log.Printf("Get service error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+		log.Printf("Get service for %s Error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
 		if errors.IsNotFound(err) {
 			_, err = c.serviceClient.Create(&object)
 			if err != nil {
-				log.Printf("Create service error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+				log.Printf("Create service for %s Error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
 			}
 		}
 	}
@@ -291,21 +294,21 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	if service != nil {
 		if service.Annotations[LastAppliedConfigAnnotation] != objectString {
 			c.serviceClient.DeleteNamespaced(service.Namespace, service.Name, &metav1.DeleteOptions{})
-			_, err = c.serviceClient.Create(&object)
+			_, err = c.serviceClient.Update(&object)
 			if err != nil {
-				log.Printf("Update(Create) service error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
+				log.Printf("Update(Create) Service for %s Error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
 			}
 		}
 	}
 	
 	_, err = c.serviceRoleLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "servicerole")
 	if err != nil {
-		log.Printf("Get serviceRole for %s error : %s\n", (app.Name + ":" + component.Name), err.Error())
+		log.Printf("Get ServiceRole for %s Error : %s\n", (app.Name + ":" + component.Name), err.Error())
 		if errors.IsNotFound(err) {
 			svcRoleObject := NewServiceRoleObject(component, app)
 			_, err = c.serviceRoleClient.Create(&svcRoleObject)
 			if err != nil {
-				log.Printf("Create servicerole error for %s error : %s\n", (app.Name + ":" + component.Name), err.Error())
+				log.Printf("Create ServiceRole for %s Error : %s\n", (app.Name + ":" + component.Name), err.Error())
 			}
 		}
 	}
@@ -325,6 +328,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	}
 	if vs != nil {
 		if vs.Annotations[LastAppliedConfigAnnotation] !=  vsObjectString{
+			vsObject.ObjectMeta.ResourceVersion = vs.ObjectMeta.ResourceVersion
 			_, err = c.virtualServiceClient.Update(&vsObject)
 			if err != nil {
 				log.Printf("Update VirtualService error for %s error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
@@ -367,19 +371,24 @@ func (c *controller)syncAuthor(component *v3.Component, app *v3.Application) err
 	object.Annotations[LastAppliedConfigAnnotation] = objectString
 	
 	serviceRoleBinding, err := c.serviceRoleBindingLister.Get(app.Namespace, object.Name)
-	if err == nil {
-		if serviceRoleBinding.Annotations[LastAppliedConfigAnnotation] != objectString {
-			_, err = c.serviceRoleBindingClient.Update(&object)
-			if err != nil{
-				return err
+	if err != nil {
+		log.Printf("Get servicerolebinding error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.serviceRoleBindingClient.Create(&object)
+			if err != nil {
+				log.Printf("Create servicerolebinding error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
 			}
-		}
-	}else if errors.IsNotFound(err) {
-		_, err = c.serviceRoleBindingClient.Create(&object)
-		if err != nil {
-			return err
 		}
 	}
 	
+	if serviceRoleBinding != nil{
+		if serviceRoleBinding.Annotations[LastAppliedConfigAnnotation] != objectString {
+			object.ObjectMeta.ResourceVersion = serviceRoleBinding.ObjectMeta.ResourceVersion
+			_, err = c.serviceRoleBindingClient.Update(&object)
+			if err != nil{
+				log.Printf("Update servicerolebinding error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+			}
+		}
+	}
 	return nil
 }

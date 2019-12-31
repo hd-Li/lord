@@ -805,6 +805,7 @@ func (r *Request) Do() Result {
 		result = r.transformResponse(resp, req)
 	})
 	if err != nil {
+		fmt.Println("request error is ", err.Error())
 		return Result{err: err}
 	}
 	return result
