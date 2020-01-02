@@ -15,7 +15,7 @@ func NewDeployObject(component *v3.Component, app *v3.Application) appsv1beta2.D
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,
-			Name:            app.Name + "-" + component.Name + "-" + "workload",
+			Name:            app.Name + "-" + component.Name + "-" + "workload" + "-" + component.Version,
 			Labels:          app.Labels,
 			Annotations:     app.Annotations,
 		},
@@ -23,6 +23,7 @@ func NewDeployObject(component *v3.Component, app *v3.Application) appsv1beta2.D
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": app.Name + "-" + component.Name + "-" + "workload",
+					"version": component.Version,
 				},
 			},
 			Template: corev1.PodTemplateSpec{

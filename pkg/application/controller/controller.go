@@ -124,8 +124,8 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 	
 	for _, component := range components {
 		if _, ok := app.Status.ComponentResource[component.Name]; !ok {
-			app.Status.ComponentResource[component.Name] = v3.ComponentResources{
-				ComponentId: app.Name + ":" + component.Name,
+			app.Status.ComponentResource[(component.Name + "-" + component.Version)] = v3.ComponentResources{
+				ComponentId: app.Name + ":" + component.Name + ":" + component.Version,
 			}
 		}
 		
@@ -244,7 +244,7 @@ func (c *controller)syncStatus (app  *v3.Application) {
 }
 
 func (c *controller)syncDeployment(component *v3.Component, app *v3.Application) error {
-	log.Printf("sync deploy for %s", app.Namespace + ":" + component.Name)
+	log.Printf("Sync deploy for %s", app.Namespace + ":" + component.Name)
 	object := NewDeployObject(component, app)
 	appliedString := GetObjectApplied(object)
 	object.Annotations[LastAppliedConfigAnnotation] = appliedString
@@ -294,7 +294,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 	if service != nil {
 		if service.Annotations[LastAppliedConfigAnnotation] != objectString {
 			c.serviceClient.DeleteNamespaced(service.Namespace, service.Name, &metav1.DeleteOptions{})
-			_, err = c.serviceClient.Update(&object)
+			_, err = c.serviceClient.Create(&object)
 			if err != nil {
 				log.Printf("Update(Create) Service for %s Error : %s\n", (app.Namespace + ":" + app.Name), err.Error())
 			}
