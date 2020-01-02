@@ -105,6 +105,10 @@ func NewDestinationruleObject(component *v3.Component, app *v3.Application) isti
 	}
 	
 	destinationrule := istiov1alpha3.DestinationRule {
+		TypeMeta: metav1.TypeMeta{
+			Kind: "DestinationRule",
+			APIVersion: "networking.istio.io/v1alpha3",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Namespace:       app.Namespace,

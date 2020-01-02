@@ -249,7 +249,7 @@ func (c *controller)syncDeployment(component *v3.Component, app *v3.Application)
 	appliedString := GetObjectApplied(object)
 	object.Annotations[LastAppliedConfigAnnotation] = appliedString
 	
-	deploy, err := c.deploymentLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "workload")
+	deploy, err := c.deploymentLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "workload" + "-" + component.Version)
 	
 	if err != nil {
 		log.Printf("Get deploy for %s Error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
@@ -354,6 +354,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 		
 		if dest != nil {
 			if dest.Annotations[LastAppliedConfigAnnotation] != destObjectString {
+				destObject.ObjectMeta.ResourceVersion = dest.ObjectMeta.ResourceVersion
 				_, err := c.destClient.Update(&destObject)
 				if err != nil {
 					log.Printf("Update DestinationRule error for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
