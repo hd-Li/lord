@@ -3,17 +3,17 @@
 package v1alpha2
 
 import (
-	//v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//runtime "k8s.io/apimachinery/pkg/runtime"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var (
 	// Package-wide variables from generator "register".
 	SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1alpha2"}
-	//SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
-	//localSchemeBuilder = &SchemeBuilder
-	//AddToScheme        = localSchemeBuilder.AddToScheme
+	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
+	localSchemeBuilder = &SchemeBuilder
+	AddToScheme        = localSchemeBuilder.AddToScheme
 )
 
 const (
@@ -21,19 +21,19 @@ const (
 	GroupName = "config.istio.io"
 )
 
-/*
+
 func Resource(resource string) schema.GroupResource {
 	return SchemeGroupVersion.WithResource(resource).GroupResource()
 }
 
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&AttributeManifest{},
-		&AttributeManifestList{},
-		&HTTPAPISpec{},
-		&HTTPAPISpecList{},
-		&HTTPAPISpecBinding{},
-		&HTTPAPISpecBindingList{},
+		//&AttributeManifest{},
+		//&AttributeManifestList{},
+		//&HTTPAPISpec{},
+		//&HTTPAPISpecList{},
+		//&HTTPAPISpecBinding{},
+		//&HTTPAPISpecBindingList{},
 		&Handler{},
 		&HandlerList{},
 		&Instance{},
@@ -48,4 +48,4 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	v1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }
-*/
+
