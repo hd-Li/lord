@@ -20,7 +20,7 @@ func main() {
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 	
 	client, err := istionetworkingv1alph3.NewForConfig(*restConfig)
-	gw := client.Gateways("").Controller().Lister
+	gw := client.Gateways("").Controller().Lister()
 	_, err = gw.Get("hd-only", "hd-only-gateway")
 	fmt.Println(gw)
 	if err != nil {
