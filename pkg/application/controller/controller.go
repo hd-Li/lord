@@ -21,6 +21,7 @@ import (
 	istioauthnv1alpha1 "github.com/rancher/types/apis/authentication.istio.io/v1alpha1"
 	istionetworkingv1alph3 "github.com/rancher/types/apis/networking.istio.io/v1alpha3"
 	istiorbacv1alpha1 "github.com/rancher/types/apis/rbac.istio.io/v1alpha1"
+	istioconfigv1alpha2 "github.com/rancher/types/apis/config.istio.io/v1alpha2"
 	//istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 )
 
@@ -53,7 +54,16 @@ type controller struct {
 	serviceRoleClient    istiorbacv1alpha1.ServiceRoleInterface
 	serviceRoleBindingLister istiorbacv1alpha1.ServiceRoleBindingLister
 	serviceRoleBindingClient istiorbacv1alpha1.ServiceRoleBindingInterface
-	
+	handerLister         istioconfigv1alpha2.HandlerLister
+	handlerClient        istioconfigv1alpha2.HandlerInterface
+	ruleLister           istioconfigv1alpha2.RuleLister
+	ruleClient           istioconfigv1alpha2.RuleInterface
+	instanceLister       istioconfigv1alpha2.InstanceLister
+	instanceClient       istioconfigv1alpha2.InstanceInterface
+	quotaspecLister      istioconfigv1alpha2.QuotaSpecLister
+	quotaspecClient      istioconfigv1alpha2.QuotaSpecInterface
+	quotaspecbindingLister  istioconfigv1alpha2.QuotaSpecBindingLister
+	quotaspecbindingClient  istioconfigv1alpha2.QuotaSpecBindingInterface
 	recorder    record.EventRecorder
 }
 
@@ -91,6 +101,16 @@ func Register(ctx context.Context, userContext *config.UserOnlyContext) {
 		serviceRoleClient:     userContext.IstioRbac.ServiceRoles(""),
 		serviceRoleBindingLister: userContext.IstioRbac.ServiceRoleBindings("").Controller().Lister(),
 		serviceRoleBindingClient: userContext.IstioRbac.ServiceRoleBindings(""),
+		handerLister:         userContext.IstioConfig.Handlers("").Controller().Lister(),
+	    handlerClient:        userContext.IstioConfig.Handlers(""),
+	    ruleLister:           userContext.IstioConfig.Rules("").Controller().Lister(),
+		ruleClient:           userContext.IstioConfig.Rules(""),
+		instanceLister:       userContext.IstioConfig.Instances("").Controller().Lister(),
+		instanceClient:       userContext.IstioConfig.Instances(""),
+		quotaspecLister:      userContext.IstioConfig.QuotaSpecs("").Controller().Lister(),
+		quotaspecClient:      userContext.IstioConfig.QuotaSpecs(""),
+		quotaspecbindingLister:  userContext.IstioConfig.QuotaSpecBindings("").Controller().Lister(),
+		quotaspecbindingClient:  userContext.IstioConfig.QuotaSpecBindings(""),
 	}
 	
 	c.applicationClient.AddHandler(ctx, "applictionCreateOrUpdate", c.sync)
@@ -103,7 +123,7 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 	
 	app := application.DeepCopy()
 	
-	c.syncNamespaceCommon(app)
+	//c.syncNamespaceCommon(app)
 	
 	//the deployed app is trusted or not
 	var trusted bool = false 
@@ -133,10 +153,16 @@ func (c *controller)sync(key string, application *v3.Application) (runtime.Objec
 			c.syncConfigmaps(&component, app)
 			c.syncImagePullSecrets(&component, app)
 			c.syncWorkload(&component, app)
+		}else {
+			err := c.syncTrustedWorkload(&component, app)
+			if err != nil {
+				return nil, err
+			}
 		}
 		
 		c.syncService(&component, app)
-		c.syncAuthor(&component, app)
+		//c.syncAuthor(&component, app)
+		c.syncPolicy(&component, app)
 				
 	}
 	
@@ -183,6 +209,7 @@ func (c *controller)syncNamespaceCommon(app *v3.Application) error {
 		}
 	}
 	log.Printf("Sync policy done for %s", app.Namespace)
+	
 	
 	cfg, err := c.clusterconfigLister.Get("", "default")
 	if err != nil{
@@ -270,7 +297,7 @@ func (c *controller)syncDeployment(component *v3.Component, app *v3.Application)
 		}
 	}
 	
-	log.Printf("sync deploy for %s done!", app.Namespace + ":" + app.Name + ":" + component.Name)
+	log.Printf("Sync deploy for %s done!", app.Namespace + ":" + app.Name + ":" + component.Name)
 	
 	return nil
 }
@@ -301,6 +328,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 		}
 	}
 	
+	/*
 	_, err = c.serviceRoleLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "servicerole")
 	if err != nil {
 		log.Printf("Get ServiceRole for %s Error : %s\n", (app.Name + ":" + component.Name), err.Error())
@@ -362,6 +390,7 @@ func (c *controller)syncService(component *v3.Component, app *v3.Application) er
 			}
 		}
 	}
+	*/
 	
 	return nil
 }
@@ -391,5 +420,142 @@ func (c *controller)syncAuthor(component *v3.Component, app *v3.Application) err
 			}
 		}
 	}
+	
+	return nil
+}
+
+func (c *controller)syncPolicy(component *v3.Component, app *v3.Application) error {
+	if component.OptTraits.RateLimit.TimeDuration != "" {
+		c.syncQuotaPolicy(component, app)
+	}
+	return nil
+}
+
+func (c *controller)syncQuotaPolicy(component *v3.Component, app *v3.Application) error {
+	log.Printf("Sync quotapolicy for  %s .......\n", app.Namespace + ":" + app.Name + "-" + component.Name)
+	
+	insObject := NewQuotaInstance(component, app)
+	insObjectString := GetObjectApplied(insObject)
+	insObject.Annotations[LastAppliedConfigAnnotation] = insObjectString
+	
+	instance, err := c.instanceLister.Get(app.Namespace,  app.Name + "-" + component.Name + "-" + "quotainstance")
+	if err != nil {
+		log.Printf("Get quotapolicy  for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.instanceClient.Create(&insObject)
+			if err != nil {
+				log.Printf("Create quotapolicy  for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+				return nil
+			}
+		}
+	}
+	
+	
+	if instance != nil {
+		if instance.Annotations[LastAppliedConfigAnnotation] != insObjectString {
+			insObject.ObjectMeta.ResourceVersion = instance.ObjectMeta.ResourceVersion
+			_, err = c.instanceClient.Update(&insObject)
+			if err != nil {
+				log.Printf("Update quotapolicy  for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+			}
+		}
+	}
+	
+	//config for client
+	specObject := NewQuotaSpec(component, app)
+	specObjectString := GetObjectApplied(specObject)
+	specObject.Annotations[LastAppliedConfigAnnotation] = specObjectString
+	
+	_, err = c.quotaspecLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "quotaspec")
+	if err != nil {
+		log.Printf("Get quotaspec  for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.quotaspecClient.Create(&specObject)
+			if err != nil {
+				log.Printf("Create quotaspec  for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+				return nil
+			}
+		}
+	}
+	
+	specbindingObject := NewQuotaSpecBinding(component, app)
+	specbindingObjectString := GetObjectApplied(specbindingObject)
+	specbindingObject.Annotations[LastAppliedConfigAnnotation] = specbindingObjectString
+	
+	_, err = c.quotaspecbindingLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "quotaspecbinding")
+	if err != nil {
+		log.Printf("Get quotaspecbinding for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.quotaspecbindingClient.Create(&specbindingObject)
+			if err != nil {
+				log.Printf("Create quotaspecbinding  for %s error : %s\n", (app.Namespace + ":" + app.Name + "-" + component.Name), err.Error())
+				return nil
+			}
+		}
+	}
+	
+	//config for (mixer) server
+	qhObject := NewQuotaHandlerObject(component, app)
+	qhObjectString :=  GetObjectApplied(qhObject)
+	qhObject.Annotations[LastAppliedConfigAnnotation] = qhObjectString
+	
+	quotahandler, err := c.handerLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "quotahandler")
+	if err != nil {
+		log.Printf("Get quotahandler for %s error : %s\n", app.Namespace + ":" + app.Name + "-" + component.Name, err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.handlerClient.Create(qhObject)
+			if err != nil {
+				log.Printf("Create quotahandler for %s error : %s\n", app.Namespace + ":" + app.Name + "-" + component.Name, err.Error())
+			}
+		}
+	}
+	
+	if quotahandler != nil {
+		if quotahandler.Annotations[LastAppliedConfigAnnotation] != qhObjectString {
+			qhObject.ObjectMeta.ResourceVersion = quotahandler.ObjectMeta.ResourceVersion
+			_, err = c.handlerClient.Update(qhObject)
+			if err != nil {
+				log.Printf("Update quotahandler for %s error : %s\n", app.Namespace + ":" + app.Name + "-" + component.Name, err.Error())
+			}
+		}
+	}
+	
+	quotaruleObject := NewQuotaRuleObject(component, app)
+	_, err = c.ruleLister.Get(app.Namespace, app.Name + "-" + component.Name + "-" + "quotarule")
+	if err != nil {
+		log.Printf("Get quotarule for %s error : %s\n", app.Namespace + ":" + app.Name + "-" + component.Name, err.Error())
+		if errors.IsNotFound(err) {
+			_, err = c.ruleClient.Create(&quotaruleObject)
+			if err != nil {
+				log.Printf("Create quotarule for %s error : %s\n", app.Namespace + ":" + app.Name + "-" + component.Name, err.Error())
+			}
+		}
+	}
+	log.Printf("Sync quota config done for %s", app.Namespace)
+	
+	return nil
+}
+
+func (c *controller)syncTrustedWorkload(component *v3.Component, app *v3.Application) error {
+	resourceWorkloadType := "deployment"
+	if resourceWorkloadType == "deployment" {
+		deploy, err := c.deploymentLister.Get(app.Namespace, component.Name)
+		if err != nil {
+			log.Printf("Get trusted deploy for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+			return err
+		}
+		
+		object := deploy.DeepCopy()
+		key := app.Name + "-" + component.Name + "-" + "workload"
+		
+		if val, _ := object.Spec.Template.Labels["app"];val != key {
+			object.Spec.Template.Labels["app"] = key
+			_, err = c.deploymentClient.Update(object)
+			if err != nil {
+				log.Printf("Update trusted deploy for %s error : %s\n", (app.Namespace + ":" + app.Name + ":" + component.Name), err.Error())
+			}
+		} 
+	}
+	
 	return nil
 }

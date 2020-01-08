@@ -158,7 +158,7 @@ type HandlerSpec struct {
 
 type HandlerParams struct {
 	RedisServerUrl string `json:"redisServerUrl,omitempty"`
-	ConnectionPoolSize int32 `json:"redisServerUrl,omitempty"`
+	ConnectionPoolSize int32 `json:"connectionPoolSize,omitempty"`
 	Quotas  []HandlerQuota  `json:"quotas,omitempty"`
 }
 
